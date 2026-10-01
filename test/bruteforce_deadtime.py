@@ -19,7 +19,7 @@ Floating-node voltages (from the circuit equations):
                two floating: v_nN = v_zN - e_z, v_xN = v_nN + e_x
                three floating: v_nN = V_dc/2 (assumed)
 
-Writes test/bruteforce_dt_ref.js. Run: python ModulationToy/test/bruteforce_deadtime.py
+Writes test/bruteforce_dt_ref.js. Run: python test/bruteforce_deadtime.py
 """
 import json
 import math

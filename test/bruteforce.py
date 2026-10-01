@@ -12,7 +12,7 @@ which changes each amplitude by at most |dL|/N. Summed over all jumps:
 (sinc) factor adds about A(pi k/N)^2/6, below 1e-9 here.
 
 Writes test/bruteforce_ref.js. Run from the repo root or anywhere:
-    python ModulationToy/test/bruteforce.py
+    python test/bruteforce.py
 """
 import json
 import math

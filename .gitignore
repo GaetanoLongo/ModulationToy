@@ -1,0 +1,8 @@
+# Python / numba caches from test/bruteforce*.py
+__pycache__/
+*.pyc
+*.nbi
+*.nbc
+
+# developer notes (architecture log, detailed verification history)
+README_internal.md
