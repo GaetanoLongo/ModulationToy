@@ -129,6 +129,10 @@ and open <http://localhost:8000/>.
 | `presets.js`, `glossary.js`, `schematic.js` | presets, hover texts, schematics |
 | `test/` | browser test suite and the Python brute-force references |
 
+## License
+
+MIT, see [LICENSE](LICENSE).
+
 ## Feedback
 
 Found something odd, wrong, or confusing? Please open an issue. Questions from students are
