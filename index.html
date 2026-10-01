@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PWM Modulation Toy</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>PWM Modulation Toy</h1>
+  <span class="sub">Carrier-based PWM for half, full and three-phase bridges</span>
+  <span class="spacer"></span>
+  <button class="icon-btn" id="themeBtn" type="button" data-tip="Switch between light and dark theme">◐ Theme</button>
+</header>
+
+<main>
+  <div class="side">
+    <section class="panel preset-panel" aria-label="Preset">
+      <div class="legend-h">Preset</div>
+      <select id="preset" aria-label="Preset"></select>
+      <div class="look" id="look"></div>
+    </section>
+
+    <aside class="panel controls" aria-label="Controls">
+      <fieldset>
+        <legend>Converter</legend>
+        <div class="field">
+          <label for="topology" data-tip="Half bridge: one leg, load between switch node a and the DC-bus midpoint O. Full bridge: two legs, load between switch nodes a and b. Three-phase bridge: three legs feeding a star-connected load with isolated star point n.">Topology</label>
+          <div class="with-btn">
+            <select id="topology">
+              <option value="HB">Half bridge</option>
+              <option value="FB">Full bridge</option>
+              <option value="TP">Three-phase bridge</option>
+            </select>
+            <button class="icon-btn sq" id="schemBtn" type="button" aria-expanded="false" aria-controls="schem"
+              data-tip="Show the schematic, with the switch and node names used in the plots">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 5h6M15 5h6M9 5v4M15 5v4M9 15v4M15 15v4M3 19h18M9 12h6M9 9l3 6M15 9l3 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field" id="strategyField">
+          <label for="strategy" id="strategyLabel"></label>
+          <select id="strategy"></select>
+          <div class="hint" id="strategyHint"></div>
+        </div>
+        <div class="field">
+          <label for="Vdc">DC bus <span data-sym="Vdc"></span> [V]</label>
+          <input type="number" id="Vdc" min="1" step="1">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Load</legend>
+        <label class="check" data-tip="Connect a series R–L load with a sinusoidal back-EMF e = E sin(θ + δ) to every output (star-connected in three-phase). The currents are the exact periodic steady state."><input type="checkbox" id="load"> Connect R–L–e load</label>
+        <div class="grid2" id="loadFields">
+          <div class="field"><label for="R"><span data-sym="R"></span> [Ω]</label><input type="number" id="R" min="0" step="0.1"></div>
+          <div class="field"><label for="Lmh"><span data-sym="L"></span> [mH]</label><input type="number" id="Lmh" min="0.001" step="0.1"></div>
+          <div class="field"><label for="E"><span data-sym="E"></span> [V peak]</label><input type="number" id="E" min="0" step="1"></div>
+          <div class="field"><label for="delta"><span data-sym="delta"></span> [°]</label><input type="number" id="delta" min="-180" max="180" step="1"></div>
+          <div class="field span2"><label for="tdus">Dead time <span data-sym="td"></span> [µs]</label><input type="number" id="tdus" min="0" step="0.5">
+            <div class="hint" id="tdHint"></div></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Reference</legend>
+        <div class="field" id="referenceField">
+          <label for="reference" data-tip="The modulating waveform m(θ) the output should follow on average. Sine + 3rd adds k<sub>3</sub>·M·sin 3θ to every leg (common mode). DC makes the leg a DC–DC switch node.">Waveform</label>
+          <select id="reference">
+            <option value="sine">Sine</option>
+            <option value="sine3">Sine + 3rd harmonic</option>
+            <option value="dc">DC (duty cycle)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="M" id="MLabel"></label>
+          <div class="slider-row">
+            <input type="range" id="M_r" min="0" max="1.3" step="0.01">
+            <input type="number" id="M" min="0" max="1.3" step="0.01">
+          </div>
+          <div class="hint" id="MHint"></div>
+        </div>
+        <div class="field" id="k3Field">
+          <label for="k3">3rd-harmonic ratio <span data-sym="k3"></span></label>
+          <div class="slider-row">
+            <input type="range" id="k3_r" min="0" max="0.5" step="0.005">
+            <input type="number" id="k3" min="0" max="0.5" step="0.005">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f1">Fundamental <span data-sym="f1"></span> [Hz]</label>
+          <input type="number" id="f1" min="1" step="1">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Carrier</legend>
+        <div class="field">
+          <label for="carrier" data-tip="Triangle: both pulse edges move (double-edge, centre-aligned). Rising sawtooth: only the falling edge moves (trailing-edge). Falling sawtooth: only the rising edge moves (leading-edge).">Shape</label>
+          <select id="carrier">
+            <option value="triangle">Triangle (centre-aligned)</option>
+            <option value="saw-up">Sawtooth rising (trailing edge)</option>
+            <option value="saw-down">Sawtooth falling (leading edge)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mf">Frequency ratio <span data-sym="mf"></span></label>
+          <div class="slider-row">
+            <input type="range" id="mf_r" min="1" max="60" step="1">
+            <input type="number" id="mf" min="1" max="100" step="0.1">
+          </div>
+          <div class="hint">Steps of 0.1; non-integer values lengthen the window</div>
+        </div>
+        <div class="field">
+          <label for="sampling" data-tip="Natural: the comparator sees the continuous reference. Regular symmetric: the reference is sampled once per carrier period (at the triangle valley) and held. Regular asymmetric: sampled at every carrier peak and valley, as a digital PWM unit that updates its compare register twice per period.">Sampling of the reference</label>
+          <select id="sampling">
+            <option value="natural">Natural</option>
+            <option value="regular1">Regular symmetric (1 sample/period)</option>
+            <option value="regular2">Regular asymmetric (2 samples/period)</option>
+          </select>
+        </div>
+      </fieldset>
+      <button class="icon-btn" id="copyLink" type="button" data-tip="The whole setup is stored in the page address">Copy link to this setup</button>
+    </aside>
+  </div>
+
+  <div class="plots">
+    <div class="panel plot plot-time">
+      <div class="plot-bar">
+        <label for="probe" data-tip="Which voltage the output plot and the spectrum show. Its hover text in the plot title says what it measures.">Output shown</label>
+        <select id="probe"></select>
+      </div>
+      <div id="timePlot"></div>
+    </div>
+    <div class="panel plot plot-spec">
+      <div class="plot-bar">
+        <label for="specOf" id="specOfLabel">Spectrum of</label>
+        <select id="specOf">
+          <option value="v">voltage</option>
+          <option value="i">load current</option>
+        </select>
+        <label for="specScale">scale</label>
+        <select id="specScale">
+          <option value="volts">Amplitude [V]</option>
+          <option value="pct">% of fundamental</option>
+          <option value="db">dB relative to fundamental</option>
+        </select>
+        <label class="check" id="svToggle" data-tip="Show the space vector v<sub>α</sub> + j v<sub>β</sub> of the three pole voltages: the hexagon of switching states and the path of the carrier-period average."><input type="checkbox" id="sv"> Space-vector view</label>
+      </div>
+      <div class="spec-row">
+        <div id="specPlot"></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel readings" aria-label="Readings">
+    <div class="legend-h">Readings</div>
+    <div id="metrics" aria-live="polite"></div>
+    <p class="foot">Ideal switches, no dead time, no load. Amplitudes are exact Fourier coefficients from the switching instants. Zoom a time plot and the others follow; double-click resets.</p>
+  </aside>
+</main>
+
+<div class="panel schem" id="schem" hidden role="dialog" aria-label="Schematic">
+  <div class="schem-head"><span id="schemTitle"></span><button class="icon-btn sq" id="schemClose" type="button" aria-label="Close">✕</button></div>
+  <div id="schemBody"></div>
+  <p class="hint">Leg colours match the gate-signal plot. P/N: positive/negative DC rail.</p>
+</div>
+<div class="panel float" id="svFloat" hidden role="dialog" aria-label="Space vector">
+  <div class="float-head" id="svHead">
+    <span data-tip="Hexagon: the six active switching states (a b c, 1 = upper switch on), radius 2V<sub>dc</sub>/3; both zero states sit at the origin. Dashed circle: SPWM linear limit (V<sub>dc</sub>/2); dotted: the inscribed circle, SVPWM limit (V<sub>dc</sub>/√3). Red: the commanded fundamental; violet: the carrier-period average of the actual vector. Drag this bar to move the panel, the corner to resize it.">Space vector <i>v</i><sub>αβ</sub></span>
+    <button class="icon-btn sq" id="svClose" type="button" aria-label="Close space-vector view">✕</button>
+  </div>
+  <div id="svPlot"></div>
+</div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="pwm.js"></script>
+<script src="circuit.js"></script>
+<script src="deadtime.js"></script>
+<script src="model.js"></script>
+<script src="glossary.js"></script>
+<script src="presets.js"></script>
+<script src="schematic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

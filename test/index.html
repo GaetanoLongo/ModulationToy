@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ModulationToy tests</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; }
+  .pass { color: #1a7f37; } .fail { color: #cf222e; }
+  pre { margin: 0 0 0 3.5rem; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>ModulationToy tests</h1>
+<p id="summary"></p>
+<div id="out"></div>
+<script src="../pwm.js"></script>
+<script src="../circuit.js"></script>
+<script src="../deadtime.js"></script>
+<script src="../model.js"></script>
+<script src="../presets.js"></script>
+<script src="bruteforce_ref.js"></script>
+<script src="bruteforce_dt_ref.js"></script>
+<script src="tests.js"></script>
+<script>
+  const res = ToyTests.run();
+  const out = document.getElementById('out');
+  res.forEach((r) => {
+    const d = document.createElement('div');
+    d.innerHTML = `<span class="${r.pass ? 'pass' : 'fail'}">${r.pass ? 'PASS' : 'FAIL'}</span> ${r.name} <small>(${r.ms} ms)</small>`;
+    const msg = r.err || r.note;
+    if (msg) { const p = document.createElement('pre'); p.textContent = msg; d.appendChild(p); }
+    out.appendChild(d);
+  });
+  const nf = res.filter((r) => !r.pass).length;
+  document.getElementById('summary').textContent = nf ? `${nf} of ${res.length} failed` : `all ${res.length} passed`;
+  document.title = nf ? `FAIL ${nf}` : 'PASS';
+</script>
+</body>
+</html>
